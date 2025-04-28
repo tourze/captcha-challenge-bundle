@@ -5,6 +5,7 @@
   "license": "MIT",
   "require": {
     "php": "^8.1",
+    "ext-gd": "*",
     "symfony/routing": "^6.4",
     "symfony/uid": "^6.4",
     "symfony/config": "^6.4",

@@ -44,7 +44,7 @@ class ChallengeController extends AbstractController
         // 创建一个空白的输出缓冲区
         ob_start();
         // 将 Gd 图像对象 $img 写入输出缓冲区
-        imagepng($img);
+        \imagejpeg($img);
         // 从输出缓冲区获取图片数据
         $imageData = ob_get_clean();
 
