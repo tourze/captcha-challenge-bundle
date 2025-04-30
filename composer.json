@@ -16,7 +16,7 @@
     "symfony/yaml": "^6.4 || ^7.1",
     "tourze/symfony-routing-auto-loader-bundle": "0.0.*",
     "tourze/json-rpc-core": "^0.0.6",
-    "tourze/json-rpc-log-bundle": "0.0.*",
+    "tourze/json-rpc-log-bundle": "0.1.*",
     "tourze/json-rpc-lock-bundle": "0.1.*",
     "psr/simple-cache": "^1.0|^2.0|^3.0",
     "nzo/url-encryptor-bundle": "^6.4",
