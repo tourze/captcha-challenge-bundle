@@ -39,7 +39,7 @@ class SendChallengeRequest extends LockableProcedure
         ];
     }
 
-    protected function getLockResource(JsonRpcParams $params): array
+    public function getLockResource(JsonRpcParams $params): ?array
     {
         return [
             'SendChallengeRequest_' . $this->requestStack->getMainRequest()?->getClientIp(),
