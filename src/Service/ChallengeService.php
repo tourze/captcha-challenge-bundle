@@ -3,14 +3,15 @@
 namespace Tourze\CaptchaChallengeBundle\Service;
 
 use Nzo\UrlEncryptorBundle\Encryptor\Encryptor;
-use Psr\SimpleCache\CacheInterface;
+use Symfony\Component\Cache\Adapter\AdapterInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Uid\Uuid;
 
 class ChallengeService
 {
     public function __construct(
-        private readonly CacheInterface $cache,
+        #[Autowire(service: 'cache.app')] private readonly AdapterInterface $cache,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly Encryptor $encryptor,
     ) {
@@ -20,7 +21,11 @@ class ChallengeService
     {
         $challengeKey = Uuid::v4()->toRfc4122();
         $challengeVal = (string) rand(10000, 99999);
-        $this->cache->set($this->getRedisKey($challengeKey), $challengeVal, 60 * 5); // 只保存5分钟
+
+        $cacheItem = $this->cache->getItem($this->getRedisKey($challengeKey));
+        $cacheItem->set($challengeVal);
+        $cacheItem->expiresAfter(60 * 5); // 只保存5分钟
+        $this->cache->save($cacheItem);
 
         return $challengeKey;
     }
@@ -48,7 +53,7 @@ class ChallengeService
 
         $res = $dbVal === $challengeVal;
         if ($res) {
-            $this->cache->delete($this->getRedisKey($challengeKey));
+            $this->cache->deleteItem($this->getRedisKey($challengeKey));
         }
 
         return $res;
@@ -56,7 +61,8 @@ class ChallengeService
 
     public function getChallengeValFromChallengeKey(string $challengeKey): string
     {
-        return (string) $this->cache->get($this->getRedisKey($challengeKey));
+        $cacheItem = $this->cache->getItem($this->getRedisKey($challengeKey));
+        return $cacheItem->isHit() ? $cacheItem->get() : '';
     }
 
     private function getRedisKey(string $challengeKey): string
