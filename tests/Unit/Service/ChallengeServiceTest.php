@@ -5,20 +5,20 @@ namespace Tourze\CaptchaChallengeBundle\Tests\Unit\Service;
 use Nzo\UrlEncryptorBundle\Encryptor\Encryptor;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\CacheInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Tourze\CaptchaChallengeBundle\Service\ChallengeService;
 
 class ChallengeServiceTest extends TestCase
 {
     private ChallengeService $challengeService;
-    private CacheInterface|MockObject $cache;
+    private ArrayAdapter $cache;
     private UrlGeneratorInterface|MockObject $urlGenerator;
     private Encryptor|MockObject $encryptor;
 
     protected function setUp(): void
     {
-        $this->cache = $this->createMock(CacheInterface::class);
+        $this->cache = new ArrayAdapter();
         $this->urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $this->encryptor = $this->createMock(Encryptor::class);
 
@@ -31,18 +31,17 @@ class ChallengeServiceTest extends TestCase
 
     public function testGenerateChallenge_returnsValidChallengeKey(): void
     {
-        $this->cache->expects($this->once())
-            ->method('set')
-            ->with(
-                $this->matchesRegularExpression('/^challenge-[\w\-]+$/'),
-                $this->matchesRegularExpression('/^\d{5}$/'),
-                $this->equalTo(60 * 5)
-            );
-
         $challengeKey = $this->challengeService->generateChallenge();
 
         $this->assertNotEmpty($challengeKey);
         $this->assertIsString($challengeKey);
+        // UUID v4 格式验证
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $challengeKey);
+        
+        // 验证缓存中存储了正确的值
+        $cacheItem = $this->cache->getItem("challenge-{$challengeKey}");
+        $this->assertTrue($cacheItem->isHit());
+        $this->assertMatchesRegularExpression('/^\d{5}$/', $cacheItem->get());
     }
 
     public function testGenerateChallengeCaptchaImageUrl_returnsValidUrl(): void
@@ -91,10 +90,10 @@ class ChallengeServiceTest extends TestCase
         $challengeVal = '12345';
         $redisKey = "challenge-{$challengeKey}";
 
-        $this->cache->expects($this->once())
-            ->method('get')
-            ->with($this->equalTo($redisKey))
-            ->willReturn($challengeVal);
+        // 手动设置缓存值
+        $cacheItem = $this->cache->getItem($redisKey);
+        $cacheItem->set($challengeVal);
+        $this->cache->save($cacheItem);
 
         $result = $this->challengeService->getChallengeValFromChallengeKey($challengeKey);
 
@@ -104,12 +103,6 @@ class ChallengeServiceTest extends TestCase
     public function testGetChallengeValFromChallengeKey_withNonExistingKey_returnsEmptyString(): void
     {
         $challengeKey = 'non-existing-key';
-        $redisKey = "challenge-{$challengeKey}";
-
-        $this->cache->expects($this->once())
-            ->method('get')
-            ->with($this->equalTo($redisKey))
-            ->willReturn(null);
 
         $result = $this->challengeService->getChallengeValFromChallengeKey($challengeKey);
 
@@ -122,18 +115,18 @@ class ChallengeServiceTest extends TestCase
         $challengeVal = '12345';
         $redisKey = "challenge-{$challengeKey}";
 
-        $this->cache->expects($this->once())
-            ->method('get')
-            ->with($this->equalTo($redisKey))
-            ->willReturn($challengeVal);
-
-        $this->cache->expects($this->once())
-            ->method('delete')
-            ->with($this->equalTo($redisKey));
+        // 手动设置缓存值
+        $cacheItem = $this->cache->getItem($redisKey);
+        $cacheItem->set($challengeVal);
+        $this->cache->save($cacheItem);
 
         $result = $this->challengeService->checkAndConsume($challengeKey, $challengeVal);
 
         $this->assertTrue($result);
+        
+        // 验证值已被删除
+        $cacheItem = $this->cache->getItem($redisKey);
+        $this->assertFalse($cacheItem->isHit());
     }
 
     public function testCheckAndConsume_withInvalidValue_returnsFalse(): void
@@ -143,13 +136,23 @@ class ChallengeServiceTest extends TestCase
         $invalidValue = '54321';
         $redisKey = "challenge-{$challengeKey}";
 
+        $cacheItem = $this->createMock(ItemInterface::class);
+        
         $this->cache->expects($this->once())
-            ->method('get')
+            ->method('getItem')
             ->with($this->equalTo($redisKey))
+            ->willReturn($cacheItem);
+            
+        $cacheItem->expects($this->once())
+            ->method('isHit')
+            ->willReturn(true);
+            
+        $cacheItem->expects($this->once())
+            ->method('get')
             ->willReturn($challengeVal);
 
         $this->cache->expects($this->never())
-            ->method('delete');
+            ->method('deleteItem');
 
         $result = $this->challengeService->checkAndConsume($challengeKey, $invalidValue);
 
