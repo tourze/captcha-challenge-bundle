@@ -27,7 +27,7 @@ class SendChallengeRequest extends LockableProcedure
     public function execute(): array
     {
         // 如果没开启登录验证，那么不需要这个
-        if ('null' === $_ENV['LOGIN_CHALLENGE_TYPE']) {
+        if (!isset($_ENV['LOGIN_CHALLENGE_TYPE']) || 'null' === $_ENV['LOGIN_CHALLENGE_TYPE']) {
             throw new ApiException('接口未启用');
         }
 

@@ -39,9 +39,16 @@ class ChallengeService
 
     public function getChallengeKeyFromEncryptKey(string $key): string
     {
-        $challengeKey = $this->encryptor->decrypt($key);
-
-        return trim($challengeKey);
+        if (empty($key)) {
+            return '';
+        }
+        
+        try {
+            $challengeKey = $this->encryptor->decrypt($key);
+            return trim($challengeKey);
+        } catch (\Throwable) {
+            return '';
+        }
     }
 
     public function checkAndConsume(string $challengeKey, string $challengeVal): bool
@@ -67,6 +74,8 @@ class ChallengeService
 
     private function getRedisKey(string $challengeKey): string
     {
-        return "challenge-{$challengeKey}";
+        // 清理缓存键，移除非法字符
+        $safeKey = preg_replace('/[{}()\/\\\\@:]/', '_', $challengeKey);
+        return "challenge-{$safeKey}";
     }
 }

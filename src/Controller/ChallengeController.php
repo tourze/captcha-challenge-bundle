@@ -17,7 +17,8 @@ class ChallengeController extends AbstractController
     {
         $challengeVal = $request->query->get('challengeVal');
         if (!$challengeVal) {
-            $challengeKey = $challengeService->getChallengeKeyFromEncryptKey($request->query->get('key'));
+            $key = $request->query->get('key', '');
+            $challengeKey = $challengeService->getChallengeKeyFromEncryptKey($key);
             if (empty($challengeKey)) {
                 return new Response('no key');
             }

@@ -131,59 +131,33 @@ class ChallengeServiceTest extends TestCase
 
     public function testCheckAndConsume_withInvalidValue_returnsFalse(): void
     {
-        $challengeKey = 'test-challenge-key';
-        $challengeVal = '12345';
-        $invalidValue = '54321';
-        $redisKey = "challenge-{$challengeKey}";
-
-        $cacheItem = $this->createMock(ItemInterface::class);
+        // 先生成一个验证码
+        $challengeKey = $this->challengeService->generateChallenge();
+        $challengeVal = $this->challengeService->getChallengeValFromChallengeKey($challengeKey);
         
-        $this->cache->expects($this->once())
-            ->method('getItem')
-            ->with($this->equalTo($redisKey))
-            ->willReturn($cacheItem);
-            
-        $cacheItem->expects($this->once())
-            ->method('isHit')
-            ->willReturn(true);
-            
-        $cacheItem->expects($this->once())
-            ->method('get')
-            ->willReturn($challengeVal);
-
-        $this->cache->expects($this->never())
-            ->method('deleteItem');
-
+        // 使用错误的值进行验证
+        $invalidValue = $challengeVal === '12345' ? '54321' : '12345';
         $result = $this->challengeService->checkAndConsume($challengeKey, $invalidValue);
 
         $this->assertFalse($result);
+        
+        // 验证验证码还存在（因为验证失败了）
+        $redisKey = "challenge-{$challengeKey}";
+        $cacheItem = $this->cache->getItem($redisKey);
+        $this->assertTrue($cacheItem->isHit());
+        $this->assertEquals($challengeVal, $cacheItem->get());
     }
 
     public function testCheckAndConsume_withEmptyKey_returnsFalse(): void
     {
-        $this->cache->expects($this->never())
-            ->method('get');
-
-        $this->cache->expects($this->never())
-            ->method('delete');
-
         $result = $this->challengeService->checkAndConsume('', '12345');
-
         $this->assertFalse($result);
     }
 
     public function testCheckAndConsume_withEmptyValue_returnsFalse(): void
     {
         $challengeKey = 'test-challenge-key';
-
-        $this->cache->expects($this->never())
-            ->method('get');
-
-        $this->cache->expects($this->never())
-            ->method('delete');
-
         $result = $this->challengeService->checkAndConsume($challengeKey, '');
-
         $this->assertFalse($result);
     }
 }

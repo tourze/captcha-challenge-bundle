@@ -86,6 +86,94 @@ class SendChallengeRequestTest extends TestCase
         $this->assertEquals('SendChallengeRequest_' . $this->clientIp, $result[0]);
     }
 
+    public function testExecute_whenGenerateChallengeThrowsException_propagatesException(): void
+    {
+        $_ENV['LOGIN_CHALLENGE_TYPE'] = 'captcha';
+
+        $this->challengeService->expects($this->once())
+            ->method('generateChallenge')
+            ->willThrowException(new \Exception('Failed to generate challenge'));
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Failed to generate challenge');
+
+        $this->procedure->execute();
+    }
+
+    public function testExecute_whenGenerateImageUrlThrowsException_propagatesException(): void
+    {
+        $_ENV['LOGIN_CHALLENGE_TYPE'] = 'captcha';
+
+        $challengeKey = 'test-challenge-key';
+
+        $this->challengeService->expects($this->once())
+            ->method('generateChallenge')
+            ->willReturn($challengeKey);
+
+        $this->challengeService->expects($this->once())
+            ->method('generateChallengeCaptchaImageUrl')
+            ->willThrowException(new \Exception('Failed to generate image URL'));
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Failed to generate image URL');
+
+        $this->procedure->execute();
+    }
+
+    public function testExecute_whenNoMainRequest_stillWorks(): void
+    {
+        $_ENV['LOGIN_CHALLENGE_TYPE'] = 'captcha';
+
+        // 模拟没有主请求的情况
+        $requestStack = $this->createMock(RequestStack::class);
+        $requestStack->method('getMainRequest')
+            ->willReturn(null);
+
+        $procedure = new SendChallengeRequest(
+            $requestStack,
+            $this->challengeService
+        );
+
+        $challengeKey = 'test-challenge-key';
+        $challengeImageUrl = 'https://example.com/captcha?key=encrypted-key';
+
+        $this->challengeService->expects($this->once())
+            ->method('generateChallenge')
+            ->willReturn($challengeKey);
+
+        $this->challengeService->expects($this->once())
+            ->method('generateChallengeCaptchaImageUrl')
+            ->with($this->equalTo($challengeKey))
+            ->willReturn($challengeImageUrl);
+
+        $result = $procedure->execute();
+
+        $this->assertIsArray($result);
+        $this->assertEquals($challengeKey, $result['challengeKey']);
+        $this->assertEquals($challengeImageUrl, $result['challengeImage']);
+    }
+
+    public function testExecute_withEmptyChallengeType_throwsApiException(): void
+    {
+        $_ENV['LOGIN_CHALLENGE_TYPE'] = 'null';
+
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage('接口未启用');
+
+        $this->procedure->execute();
+    }
+
+    public function testExecute_withUndefinedChallengeType_throwsApiException(): void
+    {
+        // 确保环境变量未设置
+        unset($_ENV['LOGIN_CHALLENGE_TYPE']);
+
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage('接口未启用');
+
+        $this->procedure->execute();
+    }
+
     protected function tearDown(): void
     {
         // 清理环境变量
