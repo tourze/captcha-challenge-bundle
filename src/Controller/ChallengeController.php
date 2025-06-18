@@ -13,11 +13,11 @@ use Tourze\CaptchaChallengeBundle\Service\ChallengeService;
 class ChallengeController extends AbstractController
 {
     #[Route(path: '/challenge/captcha-image', name: 'app_challenge_captcha_image')]
-    public function captchaImage(Request $request, ChallengeService $challengeService, KernelInterface $kernel): Response
+    public function __invoke(Request $request, ChallengeService $challengeService, KernelInterface $kernel): Response
     {
         $challengeVal = $request->query->get('challengeVal');
-        if (!$challengeVal) {
-            $key = $request->query->get('key', '');
+        if ($challengeVal === null || $challengeVal === '' || $challengeVal === false) {
+            $key = (string) $request->query->get('key', '');
             $challengeKey = $challengeService->getChallengeKeyFromEncryptKey($key);
             if (empty($challengeKey)) {
                 return new Response('no key');
@@ -49,7 +49,7 @@ class ChallengeController extends AbstractController
         // 从输出缓冲区获取图片数据
         $imageData = ob_get_clean();
 
-        $response = new Response($imageData);
+        $response = new Response($imageData ?: '');
         $response->headers->set('Content-type', 'image/jpeg');
         $response->headers->set('Pragma', 'no-cache');
         $response->headers->set('Cache-Control', 'no-cache');

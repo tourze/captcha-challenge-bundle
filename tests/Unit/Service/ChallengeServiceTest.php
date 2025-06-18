@@ -34,14 +34,13 @@ class ChallengeServiceTest extends TestCase
         $challengeKey = $this->challengeService->generateChallenge();
 
         $this->assertNotEmpty($challengeKey);
-        $this->assertIsString($challengeKey);
         // UUID v4 格式验证
         $this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $challengeKey);
         
         // 验证缓存中存储了正确的值
         $cacheItem = $this->cache->getItem("challenge-{$challengeKey}");
         $this->assertTrue($cacheItem->isHit());
-        $this->assertMatchesRegularExpression('/^\d{5}$/', $cacheItem->get());
+        $this->assertMatchesRegularExpression('/^\d{5}$/', (string) $cacheItem->get());
     }
 
     public function testGenerateChallengeCaptchaImageUrl_returnsValidUrl(): void

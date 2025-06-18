@@ -69,7 +69,7 @@ class ChallengeService
     public function getChallengeValFromChallengeKey(string $challengeKey): string
     {
         $cacheItem = $this->cache->getItem($this->getRedisKey($challengeKey));
-        return $cacheItem->isHit() ? $cacheItem->get() : '';
+        return $cacheItem->isHit() ? (string) $cacheItem->get() : '';
     }
 
     private function getRedisKey(string $challengeKey): string

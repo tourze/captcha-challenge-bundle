@@ -24,6 +24,9 @@ class SendChallengeRequest extends LockableProcedure
     ) {
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function execute(): array
     {
         // 如果没开启登录验证，那么不需要这个
@@ -39,6 +42,9 @@ class SendChallengeRequest extends LockableProcedure
         ];
     }
 
+    /**
+     * @return array<string>|null
+     */
     public function getLockResource(JsonRpcParams $params): ?array
     {
         return [

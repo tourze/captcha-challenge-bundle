@@ -53,7 +53,6 @@ class SendChallengeRequestTest extends TestCase
 
         $result = $this->procedure->execute();
 
-        $this->assertIsArray($result);
         $this->assertArrayHasKey('challengeKey', $result);
         $this->assertArrayHasKey('challengeImage', $result);
         $this->assertEquals($challengeKey, $result['challengeKey']);
@@ -148,7 +147,6 @@ class SendChallengeRequestTest extends TestCase
 
         $result = $procedure->execute();
 
-        $this->assertIsArray($result);
         $this->assertEquals($challengeKey, $result['challengeKey']);
         $this->assertEquals($challengeImageUrl, $result['challengeImage']);
     }
