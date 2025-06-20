@@ -48,7 +48,7 @@ class CaptchaIntegrationTest extends TestCase
         $request = new Request();
         $request->query->set('key', $encryptedKey);
 
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         if (extension_loaded('gd') && function_exists('imagejpeg')) {
             $this->assertEquals(200, $response->getStatusCode());
@@ -89,7 +89,7 @@ class CaptchaIntegrationTest extends TestCase
         $request = new Request();
         $request->query->set('challengeVal', $challengeVal);
 
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         if (extension_loaded('gd') && function_exists('imagejpeg')) {
             $this->assertEquals(200, $response->getStatusCode());
@@ -125,7 +125,7 @@ class CaptchaIntegrationTest extends TestCase
         $request = new Request();
         $request->query->set('key', 'invalid-encrypted-key');
 
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         // 无效的 key 会被解密成垃圾数据，但仍会尝试查找缓存，找不到则返回 'no challenge'
         $this->assertEquals('no challenge', $response->getContent());
@@ -136,7 +136,7 @@ class CaptchaIntegrationTest extends TestCase
         // 测试没有任何参数的情况
         $request = new Request();
 
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         $this->assertEquals('no key', $response->getContent());
     }

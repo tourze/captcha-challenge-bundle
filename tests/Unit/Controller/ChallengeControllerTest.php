@@ -34,7 +34,7 @@ class ChallengeControllerTest extends TestCase
             ->with($this->equalTo(''))
             ->willReturn('');
 
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         $this->assertInstanceOf(Response::class, $response);
         $this->assertEquals('no key', $response->getContent());
@@ -52,7 +52,7 @@ class ChallengeControllerTest extends TestCase
             ->with($this->equalTo($encryptedKey))
             ->willReturn('');
 
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         $this->assertInstanceOf(Response::class, $response);
         $this->assertEquals('no key', $response->getContent());
@@ -76,7 +76,7 @@ class ChallengeControllerTest extends TestCase
             ->with($this->equalTo($challengeKey))
             ->willReturn('');
 
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         $this->assertInstanceOf(Response::class, $response);
         $this->assertEquals('no challenge', $response->getContent());
@@ -100,7 +100,7 @@ class ChallengeControllerTest extends TestCase
         $this->challengeService->expects($this->never())
             ->method('getChallengeValFromChallengeKey');
 
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         if ($this->isGdExtensionAvailable()) {
             $this->assertInstanceOf(Response::class, $response);
@@ -139,7 +139,7 @@ class ChallengeControllerTest extends TestCase
             ->method('getCacheDir')
             ->willReturn(sys_get_temp_dir());
 
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         if ($this->isGdExtensionAvailable()) {
             $this->assertInstanceOf(Response::class, $response);
@@ -153,9 +153,7 @@ class ChallengeControllerTest extends TestCase
             if (function_exists('imagecreatefromstring')) {
                 $image = @imagecreatefromstring($response->getContent());
                 $this->assertNotFalse($image, 'Response should contain valid image data');
-                if ($image !== false) {
-                    imagedestroy($image);
-                }
+                imagedestroy($image);
             }
         } else {
             $this->markTestSkipped('GD extension is not available');
@@ -175,7 +173,7 @@ class ChallengeControllerTest extends TestCase
             ->with($this->equalTo(''))
             ->willReturn('');
 
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         $this->assertInstanceOf(Response::class, $response);
         $this->assertEquals('no key', $response->getContent());
@@ -194,7 +192,7 @@ class ChallengeControllerTest extends TestCase
             ->willReturn(sys_get_temp_dir());
 
         // 即使 buildAgainstOCR 失败，也应该返回有效的响应
-        $response = $this->controller->captchaImage($request, $this->challengeService, $this->kernel);
+        $response = $this->controller->__invoke($request, $this->challengeService, $this->kernel);
 
         if ($this->isGdExtensionAvailable()) {
             $this->assertInstanceOf(Response::class, $response);
