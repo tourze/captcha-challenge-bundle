@@ -12,9 +12,9 @@ use Tourze\JsonRPC\Core\Model\JsonRpcParams;
 use Tourze\JsonRPCLockBundle\Procedure\LockableProcedure;
 use Tourze\JsonRPCLogBundle\Attribute\Log;
 
-#[MethodTag('用户模块')]
-#[MethodExpose('SendChallengeRequest')]
-#[MethodDoc('发送挑战验证请求')]
+#[MethodTag(name: '用户模块')]
+#[MethodExpose(method: 'SendChallengeRequest')]
+#[MethodDoc(summary: '发送挑战验证请求')]
 #[Log]
 class SendChallengeRequest extends LockableProcedure
 {

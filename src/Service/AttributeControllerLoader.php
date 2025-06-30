@@ -9,7 +9,7 @@ use Symfony\Component\Routing\RouteCollection;
 use Tourze\CaptchaChallengeBundle\Controller\ChallengeController;
 use Tourze\RoutingAutoLoaderBundle\Service\RoutingAutoLoaderInterface;
 
-#[AutoconfigureTag('routing.loader')]
+#[AutoconfigureTag(name: 'routing.loader')]
 class AttributeControllerLoader extends Loader implements RoutingAutoLoaderInterface
 {
     private AttributeRouteControllerLoader $controllerLoader;

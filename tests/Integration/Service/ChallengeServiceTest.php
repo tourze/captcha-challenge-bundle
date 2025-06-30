@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\CaptchaChallengeBundle\Tests\Unit\Service;
+namespace Tourze\CaptchaChallengeBundle\Tests\Integration\Service;
 
 use Nzo\UrlEncryptorBundle\Encryptor\Encryptor;
 use PHPUnit\Framework\MockObject\MockObject;

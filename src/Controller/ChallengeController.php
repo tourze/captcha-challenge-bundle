@@ -49,7 +49,7 @@ class ChallengeController extends AbstractController
         // 从输出缓冲区获取图片数据
         $imageData = ob_get_clean();
 
-        $response = new Response($imageData ?: '');
+        $response = new Response($imageData !== false ? $imageData : '');
         $response->headers->set('Content-type', 'image/jpeg');
         $response->headers->set('Pragma', 'no-cache');
         $response->headers->set('Cache-Control', 'no-cache');

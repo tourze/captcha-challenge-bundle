@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\CaptchaChallengeBundle\Tests\Unit\Controller;
+namespace Tourze\CaptchaChallengeBundle\Tests\Integration\Controller;
 
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
