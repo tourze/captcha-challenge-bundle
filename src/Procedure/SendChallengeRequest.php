@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\CaptchaChallengeBundle\Procedure;
 
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Tourze\CaptchaChallengeBundle\Service\ChallengeService;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
@@ -16,6 +19,7 @@ use Tourze\JsonRPCLogBundle\Attribute\Log;
 #[MethodExpose(method: 'SendChallengeRequest')]
 #[MethodDoc(summary: '发送挑战验证请求')]
 #[Log]
+#[Autoconfigure(public: true)]
 class SendChallengeRequest extends LockableProcedure
 {
     public function __construct(

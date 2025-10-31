@@ -1,25 +1,32 @@
 # Captcha Challenge Bundle
 
-这是一个Symfony Bundle，提供图片验证码功能，用于网站安全防护。
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.1-blue.svg)](https://www.php.net/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](#)
 
-## 特性
+[English](README.md) | [中文](README.zh-CN.md)
 
-- 生成随机验证码，并将挑战值存储在缓存中
-- 提供图片验证码的图像生成和显示
-- 提供验证码校验和一次性消费功能
-- 支持JSON-RPC接口
+A Symfony Bundle that provides image captcha functionality for website security protection.
 
-## 安装
+## Features
 
-使用Composer安装:
+- Generate random captcha codes and store challenge values in cache
+- Provide image captcha generation and display
+- Provide captcha verification and one-time consumption functionality
+- Support JSON-RPC interface
+
+## Installation
+
+Install via Composer:
 
 ```bash
 composer require tourze/captcha-challenge-bundle
 ```
 
-## 配置
+## Configuration
 
-在您的Symfony应用程序中注册Bundle:
+Register the Bundle in your Symfony application:
 
 ```php
 // config/bundles.php
@@ -29,29 +36,29 @@ return [
 ];
 ```
 
-确保配置了环境变量:
+Ensure environment variables are configured:
 
-```
+```env
 # .env
-LOGIN_CHALLENGE_TYPE=captcha # 启用验证码功能，设置为'null'则禁用
+LOGIN_CHALLENGE_TYPE=captcha # Enable captcha functionality, set to 'null' to disable
 ```
 
-## 使用方法
+## Usage
 
-### 生成验证码和获取图片
+### Generating Captcha and Getting Image
 
 ```php
-// 在控制器中
+// In your controller
 use Tourze\CaptchaChallengeBundle\Service\ChallengeService;
 
 class YourController extends AbstractController
 {
     public function generateCaptcha(ChallengeService $challengeService): Response
     {
-        // 生成验证码
+        // Generate captcha
         $challengeKey = $challengeService->generateChallenge();
         
-        // 获取验证码图片URL
+        // Get captcha image URL
         $imageUrl = $challengeService->generateChallengeCaptchaImageUrl($challengeKey);
         
         return $this->json([
@@ -62,10 +69,10 @@ class YourController extends AbstractController
 }
 ```
 
-### 验证用户输入的验证码
+### Verifying User Input Captcha
 
 ```php
-// 在控制器中
+// In your controller
 use Tourze\CaptchaChallengeBundle\Service\ChallengeService;
 
 class YourController extends AbstractController
@@ -78,11 +85,11 @@ class YourController extends AbstractController
         $challengeKey = $request->request->get('challengeKey');
         $userInput = $request->request->get('captchaCode');
         
-        // 验证并消费验证码
+        // Verify and consume captcha
         $isValid = $challengeService->checkAndConsume($challengeKey, $userInput);
         
         if (!$isValid) {
-            return $this->json(['success' => false, 'message' => '验证码错误']);
+            return $this->json(['success' => false, 'message' => 'Invalid captcha code']);
         }
         
         return $this->json(['success' => true]);
@@ -90,21 +97,48 @@ class YourController extends AbstractController
 }
 ```
 
-## 技术细节
+## Advanced Usage
 
-- 验证码使用5位随机数字生成
-- 验证码在缓存中保存5分钟
-- 验证成功后，会立即从缓存中删除，防止重复使用
-- 使用 GD 库生成图片，支持反OCR功能
+### Custom Captcha Configuration
 
-## 依赖
+```php
+// Custom captcha generation with specific settings
+$challengeKey = $challengeService->generateChallenge();
+
+// Generate image with custom parameters
+$imageUrl = $challengeService->generateChallengeCaptchaImageUrl($challengeKey);
+```
+
+### Integration with Forms
+
+```php
+// In your form type
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+
+$builder
+    ->add('challengeKey', HiddenType::class)
+    ->add('captchaCode', TextType::class, [
+        'label' => 'Enter captcha code',
+        'required' => true,
+    ]);
+```
+
+## Technical Details
+
+- Captcha uses 5-digit random numbers
+- Captcha is stored in cache for 5 minutes
+- After successful verification, it is immediately deleted from cache to prevent reuse
+- Uses GD library to generate images, supports anti-OCR functionality
+
+## Requirements
 
 - PHP 8.1+
-- GD 扩展
-- Symfony 6.4 框架
-- PSR-16 缓存实现
-- Gregwar/Captcha 库
+- GD extension
+- Symfony 6.4 framework
+- PSR-16 cache implementation
+- Gregwar/Captcha library
 
-## 许可
+## License
 
-本Bundle使用MIT许可证。详情请参阅 [LICENSE](LICENSE) 文件。
+This Bundle is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

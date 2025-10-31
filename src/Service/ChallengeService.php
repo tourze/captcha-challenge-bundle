@@ -1,19 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\CaptchaChallengeBundle\Service;
 
 use Nzo\UrlEncryptorBundle\Encryptor\Encryptor;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Uid\Uuid;
 
-class ChallengeService
+#[Autoconfigure(public: true)]
+readonly class ChallengeService
 {
     public function __construct(
-        #[Autowire(service: 'cache.app')] private readonly AdapterInterface $cache,
-        private readonly UrlGeneratorInterface $urlGenerator,
-        private readonly Encryptor $encryptor,
+        #[Autowire(service: 'cache.app')] private AdapterInterface $cache,
+        private UrlGeneratorInterface $urlGenerator,
+        private Encryptor $encryptor,
     ) {
     }
 
@@ -39,21 +43,27 @@ class ChallengeService
 
     public function getChallengeKeyFromEncryptKey(string $key): string
     {
-        if (empty($key)) {
+        if ('' === $key) {
             return '';
         }
-        
+
         try {
             $challengeKey = $this->encryptor->decrypt($key);
+
             return trim($challengeKey);
         } catch (\Throwable) {
             return '';
         }
     }
 
+    /**
+     * 检查并消费验证码挑战值
+     *
+     * 不考虑并发：验证码系统为单次使用，重复验证失败是合理行为
+     */
     public function checkAndConsume(string $challengeKey, string $challengeVal): bool
     {
-        if (empty($challengeKey) || empty($challengeVal)) {
+        if ('' === $challengeKey || '' === $challengeVal) {
             return false;
         }
         $dbVal = $this->getChallengeValFromChallengeKey($challengeKey);
@@ -69,13 +79,21 @@ class ChallengeService
     public function getChallengeValFromChallengeKey(string $challengeKey): string
     {
         $cacheItem = $this->cache->getItem($this->getRedisKey($challengeKey));
-        return $cacheItem->isHit() ? (string) $cacheItem->get() : '';
+
+        if (!$cacheItem->isHit()) {
+            return '';
+        }
+
+        $value = $cacheItem->get();
+
+        return is_string($value) ? $value : '';
     }
 
     private function getRedisKey(string $challengeKey): string
     {
         // 清理缓存键，移除非法字符
-        $safeKey = preg_replace('/[{}()\/\\\\@:]/', '_', $challengeKey);
+        $safeKey = preg_replace('/[{}()\/\\\@:]/', '_', $challengeKey);
+
         return "challenge-{$safeKey}";
     }
 }

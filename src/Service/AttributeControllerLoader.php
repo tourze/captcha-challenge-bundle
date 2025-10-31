@@ -1,14 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\CaptchaChallengeBundle\Service;
 
 use Symfony\Bundle\FrameworkBundle\Routing\AttributeRouteControllerLoader;
 use Symfony\Component\Config\Loader\Loader;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Routing\RouteCollection;
 use Tourze\CaptchaChallengeBundle\Controller\ChallengeController;
 use Tourze\RoutingAutoLoaderBundle\Service\RoutingAutoLoaderInterface;
 
+#[Autoconfigure(public: true)]
 #[AutoconfigureTag(name: 'routing.loader')]
 class AttributeControllerLoader extends Loader implements RoutingAutoLoaderInterface
 {
@@ -34,6 +38,7 @@ class AttributeControllerLoader extends Loader implements RoutingAutoLoaderInter
     {
         $collection = new RouteCollection();
         $collection->addCollection($this->controllerLoader->load(ChallengeController::class));
+
         return $collection;
     }
 }

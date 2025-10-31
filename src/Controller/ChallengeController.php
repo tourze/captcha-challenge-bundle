@@ -1,30 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\CaptchaChallengeBundle\Controller;
 
 use Gregwar\Captcha\CaptchaBuilder;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Tourze\CaptchaChallengeBundle\Service\ChallengeService;
 
-class ChallengeController extends AbstractController
+#[Autoconfigure(public: true)]
+final class ChallengeController extends AbstractController
 {
-    #[Route(path: '/challenge/captcha-image', name: 'app_challenge_captcha_image')]
+    #[Route(path: '/challenge/captcha-image', name: 'app_challenge_captcha_image', methods: ['GET', 'HEAD'])]
     public function __invoke(Request $request, ChallengeService $challengeService, KernelInterface $kernel): Response
     {
         $challengeVal = $request->query->get('challengeVal');
-        if ($challengeVal === null || $challengeVal === '' || $challengeVal === false) {
+        if (null === $challengeVal || '' === $challengeVal || false === $challengeVal) {
             $key = (string) $request->query->get('key', '');
             $challengeKey = $challengeService->getChallengeKeyFromEncryptKey($key);
-            if (empty($challengeKey)) {
+            if ('' === $challengeKey) {
                 return new Response('no key');
             }
             $challengeVal = $challengeService->getChallengeValFromChallengeKey($challengeKey);
         }
-        if (empty($challengeVal)) {
+        if ('' === $challengeVal) {
             return new Response('no challenge');
         }
 
@@ -32,28 +36,56 @@ class ChallengeController extends AbstractController
         $builder->tempDir = "{$kernel->getCacheDir()}/captcha";
         $builder->setPhrase($challengeVal);
 
-        // 尝试反OCR生成，失败的话就正常处理了
+        $this->buildCaptcha($builder);
+
+        $img = $builder->getContents();
+        assert($img instanceof \GdImage);
+
+        $imageData = $this->generateImageData($img);
+
+        $response = new Response(false !== $imageData ? $imageData : '');
+        $this->setCacheHeaders($response);
+
+        return $response;
+    }
+
+    private function buildCaptcha(CaptchaBuilder $builder): void
+    {
         try {
-            $builder->buildAgainstOCR();
+            if ($this->canUseOcrad()) {
+                $builder->buildAgainstOCR();
+            } else {
+                $builder->build();
+            }
         } catch (\Throwable) {
             $builder->build();
         }
+    }
 
-        /** @var \GdImage $img */
-        $img = $builder->getContents();
+    private function canUseOcrad(): bool
+    {
+        $disabledFunctions = ini_get('disable_functions');
+        if (!function_exists('shell_exec') || (is_string($disabledFunctions) && in_array('shell_exec', explode(',', $disabledFunctions), true))) {
+            return false;
+        }
 
-        // 创建一个空白的输出缓冲区
+        $ocradCheck = @shell_exec('which ocrad 2>/dev/null');
+
+        return null !== $ocradCheck && false !== $ocradCheck && '' !== $ocradCheck;
+    }
+
+    private function generateImageData(\GdImage $img): string|false
+    {
         ob_start();
-        // 将 Gd 图像对象 $img 写入输出缓冲区
         \imagejpeg($img);
-        // 从输出缓冲区获取图片数据
-        $imageData = ob_get_clean();
 
-        $response = new Response($imageData !== false ? $imageData : '');
+        return ob_get_clean();
+    }
+
+    private function setCacheHeaders(Response $response): void
+    {
         $response->headers->set('Content-type', 'image/jpeg');
         $response->headers->set('Pragma', 'no-cache');
         $response->headers->set('Cache-Control', 'no-cache');
-
-        return $response;
     }
 }
