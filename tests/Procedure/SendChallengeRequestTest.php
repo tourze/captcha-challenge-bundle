@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Tourze\CaptchaChallengeBundle\Param\SendChallengeRequestParam;
 use Tourze\CaptchaChallengeBundle\Procedure\SendChallengeRequest;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
 
 /**
  * @internal
@@ -42,7 +44,7 @@ final class SendChallengeRequestTest extends AbstractProcedureTestCase
         $this->expectException(ApiException::class);
         $this->expectExceptionMessage('接口未启用');
 
-        $procedure->execute();
+        $procedure->execute(new SendChallengeRequestParam());
     }
 
     public function testExecuteThrowsExceptionWhenChallengeTypeIsNull(): void
@@ -56,7 +58,7 @@ final class SendChallengeRequestTest extends AbstractProcedureTestCase
         $this->expectException(ApiException::class);
         $this->expectExceptionMessage('接口未启用');
 
-        $procedure->execute();
+        $procedure->execute(new SendChallengeRequestParam());
 
         // 清理环境变量
         unset($_ENV['LOGIN_CHALLENGE_TYPE']);
@@ -70,15 +72,16 @@ final class SendChallengeRequestTest extends AbstractProcedureTestCase
         // 从容器获取真实的服务实例
         $procedure = self::getService(SendChallengeRequest::class);
 
-        $result = $procedure->execute();
+        $result = $procedure->execute(new SendChallengeRequestParam());
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('challengeKey', $result);
-        $this->assertArrayHasKey('challengeImage', $result);
-        $this->assertIsString($result['challengeKey']);
-        $this->assertIsString($result['challengeImage']);
-        $this->assertNotEmpty($result['challengeKey']);
-        $this->assertNotEmpty($result['challengeImage']);
+        $this->assertInstanceOf(ArrayResult::class, $result);
+        $data = $result->toArray();
+        $this->assertArrayHasKey('challengeKey', $data);
+        $this->assertArrayHasKey('challengeImage', $data);
+        $this->assertIsString($data['challengeKey']);
+        $this->assertIsString($data['challengeImage']);
+        $this->assertNotEmpty($data['challengeKey']);
+        $this->assertNotEmpty($data['challengeImage']);
 
         // 清理环境变量
         unset($_ENV['LOGIN_CHALLENGE_TYPE']);

@@ -10,7 +10,7 @@ use Tourze\BundleDependency\BundleDependencyInterface;
 use Tourze\JsonRPCLockBundle\JsonRPCLockBundle;
 use Tourze\RoutingAutoLoaderBundle\RoutingAutoLoaderBundle;
 
-class CaptchaChallengeBundle extends Bundle implements BundleDependencyInterface
+final class CaptchaChallengeBundle extends Bundle implements BundleDependencyInterface
 {
     public static function getBundleDependencies(): array
     {

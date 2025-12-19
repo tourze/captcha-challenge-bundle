@@ -6,12 +6,15 @@ namespace Tourze\CaptchaChallengeBundle\Procedure;
 
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Tourze\CaptchaChallengeBundle\Param\SendChallengeRequestParam;
 use Tourze\CaptchaChallengeBundle\Service\ChallengeService;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
+use Tourze\JsonRPC\Core\Contracts\RpcParamInterface;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
 use Tourze\JsonRPCLockBundle\Procedure\LockableProcedure;
 use Tourze\JsonRPCLogBundle\Attribute\Log;
 
@@ -20,7 +23,7 @@ use Tourze\JsonRPCLogBundle\Attribute\Log;
 #[MethodDoc(summary: '发送挑战验证请求')]
 #[Log]
 #[Autoconfigure(public: true)]
-class SendChallengeRequest extends LockableProcedure
+final class SendChallengeRequest extends LockableProcedure
 {
     public function __construct(
         private readonly RequestStack $requestStack,
@@ -29,9 +32,9 @@ class SendChallengeRequest extends LockableProcedure
     }
 
     /**
-     * @return array<string, string>
+     * @phpstan-param SendChallengeRequestParam $param
      */
-    public function execute(): array
+    public function execute(SendChallengeRequestParam|RpcParamInterface $param): ArrayResult
     {
         // 如果没开启登录验证，那么不需要这个
         if (!isset($_ENV['LOGIN_CHALLENGE_TYPE']) || 'null' === $_ENV['LOGIN_CHALLENGE_TYPE']) {
@@ -40,10 +43,10 @@ class SendChallengeRequest extends LockableProcedure
 
         $challengeKey = $this->challengeService->generateChallenge();
 
-        return [
+        return new ArrayResult([
             'challengeKey' => $challengeKey,
             'challengeImage' => $this->challengeService->generateChallengeCaptchaImageUrl($challengeKey),
-        ];
+        ]);
     }
 
     /**

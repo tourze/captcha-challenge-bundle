@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Uid\Uuid;
 
 #[Autoconfigure(public: true)]
-readonly class ChallengeService
+final readonly class ChallengeService
 {
     public function __construct(
         #[Autowire(service: 'cache.app')] private AdapterInterface $cache,
